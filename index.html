@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Chatroom</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; }
+    #messages { flex-grow: 1; padding: 10px; overflow-y: auto; }
+    #msgForm { display: flex; padding: 10px; }
+    #inputBox { flex-grow: 1; padding: 5px; }
+    .message { padding: 5px; margin: 5px 0; background-color: #f1f1f1; border-radius: 5px; }
+    .message span { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>Firebase Chatroom</h1>
+  
+  <div id="messages"></div>
+
+  <form id="msgForm">
+    <input type="text" id="inputBox" placeholder="Type a message" />
+    <button type="submit">Send</button>
+  </form>
+
+  <p id="username">You are: Loading...</p>
+
+  <script type="module">
+    // Import necessary functions from Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    // Firebase Configuration (replace with your actual Firebase config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPf3e1v1rJ5UkhDJS42fR5vpWyXQhbF7g",
+      authDomain: "id12-a1a42.firebaseapp.com",
+      projectId: "id12-a1a42",
+      storageBucket: "id12-a1a42.firebasestorage.app",
+      messagingSenderId: "970958451595",
+      appId: "1:970958451595:web:9ec5cc265b505798d2758e",
+      measurementId: "G-G4ND0NEYQT"
+    };
+
+    // Initialize Firebase App
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth();
+
+    // Sign in anonymously
+    signInAnonymously(auth)
+      .then(() => {
+        const user = auth.currentUser;
+        document.getElementById("username").textContent = `You are: ${user.uid}`;
+      })
+      .catch((error) => {
+        console.error("Authentication error: ", error);
+      });
+
+    // Send message function
+    document.getElementById("msgForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const message = document.getElementById("inputBox").value.trim();
+      if (message !== "") {
+        const user = auth.currentUser;
+        push(ref(db, "messages"), {
+          message: message,
+          user: user.uid,
+          timestamp: Date.now()
+        });
+        document.getElementById("inputBox").value = ""; // Clear input field
+      }
+    });
+
+    // Load and display messages in real-time
+    const messagesDiv = document.getElementById("messages");
+    onChildAdded(ref(db, "messages"), (snapshot) => {
+      const messageData = snapshot.val();
+      const messageElement = document.createElement("div");
+      messageElement.classList.add("message");
+      messageElement.innerHTML = `<span>${messageData.user}:</span> ${messageData.message}`;
+      messagesDiv.appendChild(messageElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
+    });
+  </script>
+
+</body>
+</html>

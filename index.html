@@ -64,7 +64,7 @@
   <!-- Messages Section -->
   <div id="messages"></div>
 
-  <!-- Message Input Form -->
+  <!-- Message Input Form (Initially hidden) -->
   <form id="msgForm" style="display:none;">
     <input type="text" id="inputBox" placeholder="Type a message" />
     <button type="submit">Send</button>
@@ -138,12 +138,16 @@
       e.preventDefault();
       const message = inputBox.value.trim();
       if (message !== "" && username !== "") {
+        // Pushing the message to Firebase
         push(ref(db, "messages"), {
           message: message,
           user: username,
           timestamp: Date.now()
+        }).then(() => {
+          inputBox.value = ""; // Clear input field after sending
+        }).catch((error) => {
+          console.error("Error sending message:", error);
         });
-        inputBox.value = ""; // Clear input field
       }
     });
 

@@ -11,26 +11,78 @@
     #inputBox { flex-grow: 1; padding: 5px; }
     .message { padding: 5px; margin: 5px 0; background-color: #f1f1f1; border-radius: 5px; }
     .message span { font-weight: bold; }
+
+    /* Popup Styling */
+    #usernameModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden; /* Hidden by default */
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #usernameModal.show {
+      visibility: visible;
+      opacity: 1;
+    }
+    #usernameModalContent {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      min-width: 250px;
+    }
+    #usernameInput {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    #submitUsername {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #submitUsername:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
 
   <h1>Firebase Chatroom</h1>
-  
+
+  <!-- Messages Section -->
   <div id="messages"></div>
 
-  <form id="msgForm">
+  <!-- Message Input Form -->
+  <form id="msgForm" style="display:none;">
     <input type="text" id="inputBox" placeholder="Type a message" />
     <button type="submit">Send</button>
   </form>
 
-  <p id="username">You are: Loading...</p>
+  <!-- Popup Modal to ask for username -->
+  <div id="usernameModal">
+    <div id="usernameModalContent">
+      <h2>Enter your username</h2>
+      <input type="text" id="usernameInput" placeholder="Enter your username" />
+      <button id="submitUsername">Submit</button>
+    </div>
+  </div>
 
   <script type="module">
     // Import necessary functions from Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     // Firebase Configuration (replace with your actual Firebase config)
     const firebaseConfig = {
@@ -46,35 +98,56 @@
     // Initialize Firebase App
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth();
 
-    // Sign in anonymously
-    signInAnonymously(auth)
-      .then(() => {
-        const user = auth.currentUser;
-        document.getElementById("username").textContent = `You are: ${user.uid}`;
-      })
-      .catch((error) => {
-        console.error("Authentication error: ", error);
-      });
+    // Elements
+    const messagesDiv = document.getElementById("messages");
+    const msgForm = document.getElementById("msgForm");
+    const inputBox = document.getElementById("inputBox");
+    const usernameModal = document.getElementById("usernameModal");
+    const usernameInput = document.getElementById("usernameInput");
+    const submitUsernameButton = document.getElementById("submitUsername");
+
+    // Variable to store username
+    let username = "";
+
+    // Show the popup modal for username input
+    function showUsernameModal() {
+      usernameModal.classList.add("show");
+    }
+
+    // Hide the popup modal for username input
+    function hideUsernameModal() {
+      usernameModal.classList.remove("show");
+    }
+
+    // Handle submitting username
+    submitUsernameButton.addEventListener("click", () => {
+      const enteredUsername = usernameInput.value.trim();
+      if (enteredUsername !== "") {
+        username = enteredUsername;
+        hideUsernameModal();
+        msgForm.style.display = "flex"; // Show the message input form
+        document.getElementById("username").textContent = `You are: ${username}`;
+      } else {
+        alert("Please enter a valid username.");
+      }
+    });
 
     // Send message function
-    document.getElementById("msgForm").addEventListener("submit", function (e) {
+    msgForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      const message = document.getElementById("inputBox").value.trim();
-      if (message !== "") {
-        const user = auth.currentUser;
+      const message = inputBox.value.trim();
+      if (message !== "" && username !== "") {
         push(ref(db, "messages"), {
           message: message,
-          user: user.uid,
+          user: username,
           timestamp: Date.now()
         });
-        document.getElementById("inputBox").value = ""; // Clear input field
+        inputBox.value = ""; // Clear input field
       }
     });
 
     // Load and display messages in real-time
-    const messagesDiv = document.getElementById("messages");
     onChildAdded(ref(db, "messages"), (snapshot) => {
       const messageData = snapshot.val();
       const messageElement = document.createElement("div");
@@ -83,6 +156,9 @@
       messagesDiv.appendChild(messageElement);
       messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
     });
+
+    // Show the modal on page load to ask for username
+    showUsernameModal();
   </script>
 
 </body>

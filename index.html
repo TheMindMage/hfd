@@ -55,6 +55,21 @@
     #submitUsername:hover {
       background-color: #0056b3;
     }
+
+    /* Delete button styling */
+    #deleteMessagesButton {
+      background-color: red;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+    }
+    #deleteMessagesButton:hover {
+      background-color: #cc0000;
+    }
   </style>
 </head>
 <body>
@@ -70,6 +85,9 @@
     <button type="submit">Send</button>
   </form>
 
+  <!-- Delete Messages Button -->
+  <button id="deleteMessagesButton">Delete All Messages</button>
+
   <!-- Popup Modal to ask for username -->
   <div id="usernameModal">
     <div id="usernameModalContent">
@@ -82,7 +100,7 @@
   <script type="module">
     // Import necessary functions from Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, remove, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     // Firebase Configuration (replace with your actual Firebase config)
     const firebaseConfig = {
@@ -106,6 +124,7 @@
     const usernameModal = document.getElementById("usernameModal");
     const usernameInput = document.getElementById("usernameInput");
     const submitUsernameButton = document.getElementById("submitUsername");
+    const deleteMessagesButton = document.getElementById("deleteMessagesButton");
 
     // Variable to store username
     let username = "";
@@ -159,6 +178,17 @@
       messageElement.innerHTML = `<span>${messageData.user}:</span> ${messageData.message}`;
       messagesDiv.appendChild(messageElement);
       messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
+    });
+
+    // Function to delete all messages
+    deleteMessagesButton.addEventListener("click", () => {
+      // Delete all messages in the Firebase database
+      remove(ref(db, "messages")).then(() => {
+        messagesDiv.innerHTML = ""; // Clear messages from the UI
+        alert("All messages have been deleted.");
+      }).catch((error) => {
+        console.error("Error deleting messages:", error);
+      });
     });
 
     // Show the modal on page load to ask for username
